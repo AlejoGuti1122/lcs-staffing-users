@@ -63,12 +63,20 @@ export default function ApplicationForm() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    // ✅ DESPUÉS (correcto)
     defaultValues: {
-      englishLevel: [],
-      workExperience: [],
-      hasExperience: undefined,
+      email: "",
       hasTransport: undefined,
       hasDocuments: undefined,
+      englishLevel: [],
+      fullName: "",
+      phone: "",
+      birthDate: "",
+      address: "",
+      hasExperience: undefined,
+      experienceDetails: "",
+      workExperience: [],
+      additionalNotes: "",
     },
   })
 

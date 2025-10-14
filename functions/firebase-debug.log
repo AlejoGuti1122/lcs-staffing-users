@@ -1,0 +1,109 @@
+[debug] [2025-10-07T19:21:21.554Z] ----------------------------------------------------------------------
+[debug] [2025-10-07T19:21:21.557Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Alejandro Gutierrez\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions --debug
+[debug] [2025-10-07T19:21:21.557Z] CLI Version:   14.18.0
+[debug] [2025-10-07T19:21:21.557Z] Platform:      win32
+[debug] [2025-10-07T19:21:21.557Z] Node Version:  v22.16.0
+[debug] [2025-10-07T19:21:21.558Z] Time:          Tue Oct 07 2025 14:21:21 GMT-0500 (hora estándar de Colombia)
+[debug] [2025-10-07T19:21:21.558Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-10-07T19:21:21.785Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-07T19:21:21.786Z] > authorizing via signed-in user (c.gutierrez.d.alejandro@gmail.com)
+[debug] [2025-10-07T19:21:21.787Z] [iam] checking project lcs-staffing-admin for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-10-07T19:21:21.788Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:21.789Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:21.790Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/lcs-staffing-admin:testIamPermissions [none]
+[debug] [2025-10-07T19:21:21.790Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/lcs-staffing-admin:testIamPermissions x-goog-quota-user=projects/lcs-staffing-admin
+[debug] [2025-10-07T19:21:21.791Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/lcs-staffing-admin:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-10-07T19:21:22.534Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/lcs-staffing-admin:testIamPermissions 200
+[debug] [2025-10-07T19:21:22.536Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/lcs-staffing-admin:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-10-07T19:21:22.536Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:22.536Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:22.537Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/lcs-staffing-admin/serviceAccounts/lcs-staffing-admin@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-10-07T19:21:22.537Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/lcs-staffing-admin/serviceAccounts/lcs-staffing-admin@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-10-07T19:21:23.242Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/lcs-staffing-admin/serviceAccounts/lcs-staffing-admin@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-10-07T19:21:23.242Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/lcs-staffing-admin/serviceAccounts/lcs-staffing-admin@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'lcs-staffing-admin'...
+[info] 
+[info] i  deploying functions 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run lint
+[info] +  functions: Finished running predeploy script. 
+[debug] [2025-10-07T19:21:25.753Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:25.753Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:25.754Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/lcs-staffing-admin [none]
+[debug] [2025-10-07T19:21:26.146Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/lcs-staffing-admin 200
+[debug] [2025-10-07T19:21:26.147Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/lcs-staffing-admin {"projectNumber":"202987826735","projectId":"lcs-staffing-admin","lifecycleState":"ACTIVE","name":"lcs-staffing-admin","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-09-22T17:43:42.245380Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-10-07T19:21:26.155Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:26.155Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:26.156Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/lcs-staffing-admin/adminSdkConfig [none]
+[debug] [2025-10-07T19:21:26.721Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/lcs-staffing-admin/adminSdkConfig 200
+[debug] [2025-10-07T19:21:26.726Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/lcs-staffing-admin/adminSdkConfig {"projectId":"lcs-staffing-admin","storageBucket":"lcs-staffing-admin.firebasestorage.app"}
+[debug] [2025-10-07T19:21:26.727Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:26.727Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:26.727Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/lcs-staffing-admin/configs [none]
+[debug] [2025-10-07T19:21:27.319Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/lcs-staffing-admin/configs 200
+[debug] [2025-10-07T19:21:27.320Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/lcs-staffing-admin/configs {"configs":[{"name":"projects/lcs-staffing-admin/configs/sendgrid"}]}
+[debug] [2025-10-07T19:21:27.321Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:27.322Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:27.322Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/lcs-staffing-admin/configs/sendgrid/variables [none]
+[debug] [2025-10-07T19:21:27.642Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/lcs-staffing-admin/configs/sendgrid/variables 200
+[debug] [2025-10-07T19:21:27.642Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/lcs-staffing-admin/configs/sendgrid/variables {"variables":[{"name":"projects/lcs-staffing-admin/configs/sendgrid/variables/key","updateTime":"2025-10-07T19:12:27.782015159Z"}]}
+[debug] [2025-10-07T19:21:27.644Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:27.644Z] Checked if tokens are valid: true, expires at: 1759866493940
+[debug] [2025-10-07T19:21:27.645Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/lcs-staffing-admin/configs/sendgrid/variables/key [none]
+[debug] [2025-10-07T19:21:28.063Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/lcs-staffing-admin/configs/sendgrid/variables/key 200
+[debug] [2025-10-07T19:21:28.064Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/lcs-staffing-admin/configs/sendgrid/variables/key {"name":"projects/lcs-staffing-admin/configs/sendgrid/variables/key","updateTime":"2025-10-07T19:12:27.782015159Z","text":"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"}
+[debug] [2025-10-07T19:21:28.068Z] Validating nodejs source
+[warn] !  functions: Runtime Node.js 18 was deprecated on 2025-04-30 and will be decommissioned on 2025-10-30, after which you will not be able to deploy without upgrading. Consider upgrading now to avoid disruption. See https://cloud.google.com/functions/docs/runtime-support for full details on the lifecycle policy 
+[debug] [2025-10-07T19:21:29.273Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "lint": "eslint .",
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.15.0",
+    "eslint-config-google": "^0.14.0",
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2025-10-07T19:21:29.274Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2025-10-07T19:21:29.276Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-10-07T19:21:29.290Z] Found firebase-functions binary at 'C:\Users\Alejandro Gutierrez\Projects\lcss-staffing-users\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8840
+
+[error] TypeError: functions.firestore.document is not a function
+    at Object.<anonymous> (C:\Users\Alejandro Gutierrez\Projects\lcss-staffing-users\functions\index.js:7:4)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at loadModule (C:\Users\Alejandro Gutierrez\Projects\lcss-staffing-users\functions\node_modules\firebase-functions\lib\runtime\loader.js:40:16)
+
+[debug] [2025-10-07T19:21:29.866Z] Got response code 400; body Failed to generate manifest from function source: functions.firestore.document is not a function
+[error] 
+[error] Error: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error
