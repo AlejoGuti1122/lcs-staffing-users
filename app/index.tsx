@@ -1,5 +1,6 @@
 // app/index.tsx
 import { MaterialIcons } from "@expo/vector-icons"
+import * as Location from "expo-location"
 import { router } from "expo-router"
 import {
   collection,
@@ -11,6 +12,7 @@ import {
 import { useEffect, useState } from "react"
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   StatusBar,
@@ -27,16 +29,82 @@ interface Job {
   description: string
   company: string
   location?: string
+  latitude?: number
+  longitude?: number
   salary?: string
   requirements?: string[]
   status: string
   imageURL?: string
+  distance?: number // Distancia calculada
+}
+
+// Función para calcular distancia en millas usando fórmula de Haversine
+const calculateDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number => {
+  const R = 3958.8 // Radio de la Tierra en millas
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLon = ((lon2 - lon1) * Math.PI) / 180
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2)
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  const distance = R * c
+
+  return distance
 }
 
 export default function Index() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number
+    longitude: number
+  } | null>(null)
 
+  // Obtener ubicación del usuario
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync()
+
+        if (status !== "granted") {
+          Alert.alert(
+            "Permiso denegado",
+            "Se necesita acceso a la ubicación para mostrar empleos cercanos"
+          )
+          setLoading(false)
+          return
+        }
+
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        })
+
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        })
+      } catch (error) {
+        console.error("Error obteniendo ubicación:", error)
+        Alert.alert(
+          "Error",
+          "No se pudo obtener tu ubicación. Verifica que el GPS esté activado."
+        )
+        setLoading(false)
+      }
+    })()
+  }, [])
+
+  // Obtener empleos de Firebase
   useEffect(() => {
     const q = query(
       collection(db, "jobs"),
@@ -50,12 +118,33 @@ export default function Index() {
         ...doc.data(),
       })) as Job[]
 
-      setJobs(jobsData)
+      // Si tenemos la ubicación del usuario, calcular distancias
+      if (userLocation) {
+        const jobsWithDistance = jobsData.map((job) => {
+          if (job.latitude && job.longitude) {
+            const distance = calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              job.latitude,
+              job.longitude
+            )
+            return { ...job, distance }
+          }
+          return { ...job, distance: 999999 } // Empleos sin coordenadas al final
+        })
+
+        // Ordenar por distancia (más cerca primero)
+        jobsWithDistance.sort((a, b) => (a.distance || 0) - (b.distance || 0))
+        setJobs(jobsWithDistance)
+      } else {
+        setJobs(jobsData)
+      }
+
       setLoading(false)
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [userLocation])
 
   const JobCard = ({ item }: { item: Job }) => (
     <TouchableOpacity
@@ -87,14 +176,19 @@ export default function Index() {
           <Text style={styles.company}>{item.company}</Text>
         </View>
 
-        {item.location && (
+        {/* Mostrar distancia en lugar de ubicación completa */}
+        {item.distance !== undefined && item.distance < 999999 && (
           <View style={styles.row}>
             <MaterialIcons
-              name="location-on"
+              name="near-me"
               size={16}
-              color="#666"
+              color="#3b82f6"
             />
-            <Text style={styles.location}>{item.location}</Text>
+            <Text style={styles.distance}>
+              {item.distance < 0.1
+                ? "Menos de 0.1 millas"
+                : `${item.distance.toFixed(1)} millas de distancia`}
+            </Text>
           </View>
         )}
 
@@ -139,6 +233,7 @@ export default function Index() {
           size="large"
           color="#3b82f6"
         />
+        <Text style={styles.loadingText}>Obteniendo tu ubicación...</Text>
       </View>
     )
   }
@@ -152,7 +247,10 @@ export default function Index() {
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Empleos Disponibles</Text>
-        <Text style={styles.headerSubtitle}>{jobs.length} empleos activos</Text>
+        <Text style={styles.headerSubtitle}>
+          {jobs.length} empleos activos
+          {userLocation && " • Ordenados por distancia"}
+        </Text>
       </View>
 
       <FlatList
@@ -176,6 +274,10 @@ export default function Index() {
   )
 }
 
+Index.options = {
+  headerShown: false,
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -185,6 +287,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#666",
   },
   header: {
     backgroundColor: "#fff",
@@ -241,9 +348,10 @@ const styles = StyleSheet.create({
     color: "#374151",
     marginLeft: 6,
   },
-  location: {
+  distance: {
     fontSize: 14,
-    color: "#6b7280",
+    color: "#3b82f6",
+    fontWeight: "600",
     marginLeft: 6,
   },
   salary: {
