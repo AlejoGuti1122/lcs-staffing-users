@@ -34,9 +34,9 @@ exports.sendApplicationEmail = onDocumentCreated(
         <hr>
         <p><strong>Transporte:</strong> ${application.hasTransport}</p>
         <p><strong>Documentos:</strong> ${application.hasDocuments}</p>
-        <p><strong>Nivel de inglés:</strong> ${
-          application.englishLevel?.join(", ") || "No especificado"
-        }</p>
+     <p><strong>Nivel de inglés:</strong> ${
+       application.englishLevel || "No especificado"
+     }</p>
         <p><strong>Experiencia:</strong> ${application.hasExperience}</p>
         ${
           application.experienceDetails

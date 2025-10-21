@@ -10,6 +10,7 @@ import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
   Alert,
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
   StatusBar,
@@ -101,7 +102,11 @@ export default function ApplicationForm() {
   const hasExperience = watch("hasExperience")
 
   const onSubmit = async (data: FormData) => {
+    console.log("🚀 Iniciando envío...")
+
     try {
+      console.log("📝 Guardando en Firestore...")
+
       await addDoc(collection(db, "applications"), {
         ...data,
         jobId,
@@ -110,14 +115,33 @@ export default function ApplicationForm() {
         createdAt: serverTimestamp(),
       })
 
-      Alert.alert(
-        "¡Aplicación enviada!",
-        "Tu aplicación ha sido enviada exitosamente. Te contactaremos pronto.",
-        [{ text: "OK", onPress: () => router.back() }]
-      )
+      console.log("✅ Guardado exitoso, mostrando alerta...")
+
+      // Para WEB usa window.alert, para móvil usa Alert.alert
+      if (Platform.OS === "web") {
+        window.alert(
+          "✅ ¡Aplicación enviada!\n\nTu aplicación ha sido enviada exitosamente. Te contactaremos pronto."
+        )
+        router.back()
+      } else {
+        Alert.alert(
+          "¡Aplicación enviada!",
+          "Tu aplicación ha sido enviada exitosamente. Te contactaremos pronto.",
+          [{ text: "OK", onPress: () => router.back() }]
+        )
+      }
+
+      console.log("✅ Alerta mostrada")
     } catch (error) {
-      console.error("Error:", error)
-      Alert.alert("Error", "No se pudo enviar la aplicación")
+      console.error("❌ Error:", error)
+
+      if (Platform.OS === "web") {
+        window.alert(
+          "❌ Error\n\nNo se pudo enviar la aplicación. Intenta de nuevo."
+        )
+      } else {
+        Alert.alert("Error", "No se pudo enviar la aplicación")
+      }
     }
   }
 
@@ -152,485 +176,585 @@ export default function ApplicationForm() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
-        {/* Job Title */}
-        <View style={styles.jobInfo}>
-          <Text style={styles.jobTitle}>{jobTitle}</Text>
-        </View>
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Job Title */}
+          <View style={styles.jobInfo}>
+            <Text style={styles.jobTitle}>{jobTitle}</Text>
+          </View>
 
-        {/* Email */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Correo electrónico<Text style={styles.required}> *</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={[styles.input, errors.email && styles.inputError]}
-                placeholder="ejemplo@correo.com"
-                placeholderTextColor="#6b7280"
-                value={value}
-                onChangeText={(text) => onChange(text.trim())}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+          {/* Email */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Correo electrónico<Text style={styles.required}> *</Text>
+            </Text>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={[styles.input, errors.email && styles.inputError]}
+                  placeholder="ejemplo@correo.com"
+                  placeholderTextColor="#6b7280"
+                  value={value}
+                  onChangeText={(text) => onChange(text.trim())}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              )}
+            />
+            {errors.email && (
+              <Text style={styles.error}>{errors.email.message}</Text>
             )}
-          />
-          {errors.email && (
-            <Text style={styles.error}>{errors.email.message}</Text>
-          )}
-        </View>
+          </View>
 
-        {/* Transporte */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            ¿Tienes transporte confiable para llenar diariamente al trabajo?
-            <Text style={styles.required}> *</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="hasTransport"
-            render={({ field }) => (
-              <View>
-                <TouchableOpacity
-                  style={styles.radioOption}
-                  onPress={() => field.onChange("si")}
-                >
-                  <View
-                    style={[
-                      styles.radio,
-                      field.value === "si" && styles.radioSelected,
-                    ]}
-                  >
-                    {field.value === "si" && <View style={styles.radioDot} />}
-                  </View>
-                  <Text style={styles.radioLabel}>Sí</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.radioOption}
-                  onPress={() => field.onChange("no")}
-                >
-                  <View
-                    style={[
-                      styles.radio,
-                      field.value === "no" && styles.radioSelected,
-                    ]}
-                  >
-                    {field.value === "no" && <View style={styles.radioDot} />}
-                  </View>
-                  <Text style={styles.radioLabel}>No</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-          {errors.hasTransport && (
-            <Text style={styles.error}>{errors.hasTransport.message}</Text>
-          )}
-        </View>
-
-        {/* Documentación */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            ¿Cuentas con documentación para trabajar legalmente en Estados
-            Unidos?
-            <Text style={styles.required}> *</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="hasDocuments"
-            render={({ field }) => (
-              <View>
-                <TouchableOpacity
-                  style={styles.radioOption}
-                  onPress={() => field.onChange("si")}
-                >
-                  <View
-                    style={[
-                      styles.radio,
-                      field.value === "si" && styles.radioSelected,
-                    ]}
-                  >
-                    {field.value === "si" && <View style={styles.radioDot} />}
-                  </View>
-                  <Text style={styles.radioLabel}>Sí</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.radioOption}
-                  onPress={() => field.onChange("no")}
-                >
-                  <View
-                    style={[
-                      styles.radio,
-                      field.value === "no" && styles.radioSelected,
-                    ]}
-                  >
-                    {field.value === "no" && <View style={styles.radioDot} />}
-                  </View>
-                  <Text style={styles.radioLabel}>No</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-          {errors.hasDocuments && (
-            <Text style={styles.error}>{errors.hasDocuments.message}</Text>
-          )}
-        </View>
-
-        {/* Nivel de inglés */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            ¿Cuál es su nivel de inglés?<Text style={styles.required}> *</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="englishLevel"
-            render={({ field }) => (
-              <View>
-                {["Bajo", "Medio", "Alto"].map((level) => (
+          {/* Transporte */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              ¿Tienes transporte confiable para llenar diariamente al trabajo?
+              <Text style={styles.required}> *</Text>
+            </Text>
+            <Controller
+              control={control}
+              name="hasTransport"
+              render={({ field }) => (
+                <View>
                   <TouchableOpacity
-                    key={level}
                     style={styles.radioOption}
-                    onPress={() => field.onChange(level)}
+                    onPress={() => field.onChange("si")}
                   >
                     <View
                       style={[
                         styles.radio,
-                        field.value === level && styles.radioSelected,
+                        field.value === "si" && styles.radioSelected,
                       ]}
                     >
-                      {field.value === level && (
-                        <View style={styles.radioDot} />
-                      )}
+                      {field.value === "si" && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>{level}</Text>
+                    <Text style={styles.radioLabel}>Sí</Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          />
-          {errors.englishLevel && (
-            <Text style={styles.error}>{errors.englishLevel.message}</Text>
-          )}
-        </View>
-
-        {/* Nombre */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Nombre Completo<Text style={styles.required}> *</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="fullName"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={[styles.input, errors.fullName && styles.inputError]}
-                placeholder="Tu respuesta"
-                placeholderTextColor="#6b7280"
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-          {errors.fullName && (
-            <Text style={styles.error}>{errors.fullName.message}</Text>
-          )}
-        </View>
-
-        {/* Teléfono */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Número de teléfono<Text style={styles.required}> *</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="phone"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={[styles.input, errors.phone && styles.inputError]}
-                placeholder="1234567890"
-                placeholderTextColor="#6b7280"
-                value={value}
-                onChangeText={(text) => {
-                  // Solo permitir números
-                  const numericText = text.replace(/[^0-9]/g, "")
-                  onChange(numericText)
-                }}
-                keyboardType="numeric"
-                maxLength={15}
-              />
-            )}
-          />
-          {errors.phone && (
-            <Text style={styles.error}>{errors.phone.message}</Text>
-          )}
-        </View>
-
-        {/* Fecha de nacimiento */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Fecha de Nacimiento<Text style={styles.required}> *</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="birthDate"
-            render={({ field: { onChange, value } }) => (
-              <>
-                {Platform.OS === "web" ? (
-                  // Input nativo para WEB
-                  <View style={styles.dateInput}>
-                    <input
-                      type="date"
-                      value={
-                        value
-                          ? value.split("/").reverse().join("-") // Convertir DD/MM/YYYY a YYYY-MM-DD
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const dateValue = e.target.value // YYYY-MM-DD
-                        if (dateValue) {
-                          const [year, month, day] = dateValue.split("-")
-                          onChange(`${day}/${month}/${year}`) // Guardar como DD/MM/YYYY
-                        } else {
-                          onChange("")
-                        }
-                      }}
-                      max={new Date().toISOString().split("T")[0]} // No permitir fechas futuras
-                      min="1900-01-01"
-                      style={{
-                        width: "100%",
-                        backgroundColor: "transparent",
-                        border: "none",
-                        outline: "none",
-                        color: "#fff",
-                        fontSize: 16,
-                        fontFamily: "inherit",
-                        cursor: "pointer",
-                      }}
-                    />
-                  </View>
-                ) : (
-                  // DatePicker para móviles
-                  <>
-                    <TouchableOpacity
+                  <TouchableOpacity
+                    style={styles.radioOption}
+                    onPress={() => field.onChange("no")}
+                  >
+                    <View
                       style={[
-                        styles.dateInput,
-                        errors.birthDate && styles.inputError,
+                        styles.radio,
+                        field.value === "no" && styles.radioSelected,
                       ]}
-                      onPress={() => {
-                        if (value) {
-                          const [day, month, year] = value.split("/")
-                          if (day && month && year) {
-                            setTempDate(
-                              new Date(
-                                parseInt(year),
-                                parseInt(month) - 1,
-                                parseInt(day)
-                              )
-                            )
-                          }
-                        }
-                        setShowDatePicker(true)
-                      }}
-                      activeOpacity={0.7}
                     >
-                      <MaterialIcons
-                        name="calendar-today"
-                        size={20}
-                        color="#dc2626"
-                        style={{ marginRight: 10 }}
-                      />
-                      <Text
-                        style={value ? styles.dateText : styles.datePlaceholder}
+                      {field.value === "no" && <View style={styles.radioDot} />}
+                    </View>
+                    <Text style={styles.radioLabel}>No</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+            {errors.hasTransport && (
+              <Text style={styles.error}>{errors.hasTransport.message}</Text>
+            )}
+          </View>
+
+          {/* Documentación */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              ¿Cuentas con documentación para trabajar legalmente en Estados
+              Unidos?
+              <Text style={styles.required}> *</Text>
+            </Text>
+            <Controller
+              control={control}
+              name="hasDocuments"
+              render={({ field }) => (
+                <View>
+                  <TouchableOpacity
+                    style={styles.radioOption}
+                    onPress={() => field.onChange("si")}
+                  >
+                    <View
+                      style={[
+                        styles.radio,
+                        field.value === "si" && styles.radioSelected,
+                      ]}
+                    >
+                      {field.value === "si" && <View style={styles.radioDot} />}
+                    </View>
+                    <Text style={styles.radioLabel}>Sí</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.radioOption}
+                    onPress={() => field.onChange("no")}
+                  >
+                    <View
+                      style={[
+                        styles.radio,
+                        field.value === "no" && styles.radioSelected,
+                      ]}
+                    >
+                      {field.value === "no" && <View style={styles.radioDot} />}
+                    </View>
+                    <Text style={styles.radioLabel}>No</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+            {errors.hasDocuments && (
+              <Text style={styles.error}>{errors.hasDocuments.message}</Text>
+            )}
+          </View>
+
+          {/* Nivel de inglés */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              ¿Cuál es su nivel de inglés?
+              <Text style={styles.required}> *</Text>
+            </Text>
+            <Controller
+              control={control}
+              name="englishLevel"
+              render={({ field }) => (
+                <View>
+                  {["Bajo", "Medio", "Alto"].map((level) => (
+                    <TouchableOpacity
+                      key={level}
+                      style={styles.radioOption}
+                      onPress={() => field.onChange(level)}
+                    >
+                      <View
+                        style={[
+                          styles.radio,
+                          field.value === level && styles.radioSelected,
+                        ]}
                       >
-                        {value || "Toca para seleccionar fecha"}
-                      </Text>
+                        {field.value === level && (
+                          <View style={styles.radioDot} />
+                        )}
+                      </View>
+                      <Text style={styles.radioLabel}>{level}</Text>
                     </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            />
+            {errors.englishLevel && (
+              <Text style={styles.error}>{errors.englishLevel.message}</Text>
+            )}
+          </View>
 
-                    {showDatePicker && Platform.OS === "android" && (
-                      <DateTimePicker
-                        value={tempDate}
-                        mode="date"
-                        display="default"
-                        onChange={(
-                          event: DateTimePickerEvent,
-                          selectedDate?: Date
-                        ) => {
-                          setShowDatePicker(false)
+          {/* Nombre */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Nombre Completo<Text style={styles.required}> *</Text>
+            </Text>
+            <Controller
+              control={control}
+              name="fullName"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={[styles.input, errors.fullName && styles.inputError]}
+                  placeholder="Tu respuesta"
+                  placeholderTextColor="#6b7280"
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+            {errors.fullName && (
+              <Text style={styles.error}>{errors.fullName.message}</Text>
+            )}
+          </View>
 
-                          if (event.type === "set" && selectedDate) {
-                            const day = selectedDate
-                              .getDate()
-                              .toString()
-                              .padStart(2, "0")
-                            const month = (selectedDate.getMonth() + 1)
-                              .toString()
-                              .padStart(2, "0")
-                            const year = selectedDate.getFullYear()
-                            onChange(`${day}/${month}/${year}`)
-                            setTempDate(selectedDate)
+          {/* Teléfono */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Número de teléfono<Text style={styles.required}> *</Text>
+            </Text>
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={[styles.input, errors.phone && styles.inputError]}
+                  placeholder="1234567890"
+                  placeholderTextColor="#6b7280"
+                  value={value}
+                  onChangeText={(text) => {
+                    // Solo permitir números
+                    const numericText = text.replace(/[^0-9]/g, "")
+                    onChange(numericText)
+                  }}
+                  keyboardType="numeric"
+                  maxLength={15}
+                />
+              )}
+            />
+            {errors.phone && (
+              <Text style={styles.error}>{errors.phone.message}</Text>
+            )}
+          </View>
+
+          {/* Fecha de nacimiento */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Fecha de Nacimiento<Text style={styles.required}> *</Text>
+            </Text>
+            <Controller
+              control={control}
+              name="birthDate"
+              render={({ field: { onChange, value } }) => (
+                <>
+                  {Platform.OS === "web" ? (
+                    // Input nativo para WEB
+                    <View style={styles.dateInput}>
+                      <input
+                        type="date"
+                        value={
+                          value
+                            ? value.split("/").reverse().join("-") // Convertir DD/MM/YYYY a YYYY-MM-DD
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const dateValue = e.target.value // YYYY-MM-DD
+                          if (dateValue) {
+                            const [year, month, day] = dateValue.split("-")
+                            onChange(`${day}/${month}/${year}`) // Guardar como DD/MM/YYYY
+                          } else {
+                            onChange("")
                           }
                         }}
-                        maximumDate={new Date()}
-                        minimumDate={new Date(1900, 0, 1)}
+                        max={new Date().toISOString().split("T")[0]} // No permitir fechas futuras
+                        min="1900-01-01"
+                        style={{
+                          width: "100%",
+                          backgroundColor: "transparent",
+                          border: "none",
+                          outline: "none",
+                          color: "#fff",
+                          fontSize: 16,
+                          fontFamily: "inherit",
+                          cursor: "pointer",
+                        }}
                       />
-                    )}
+                    </View>
+                  ) : (
+                    // DatePicker para móviles
+                    <>
+                      <TouchableOpacity
+                        style={[
+                          styles.dateInput,
+                          errors.birthDate && styles.inputError,
+                        ]}
+                        onPress={() => {
+                          if (value) {
+                            const [day, month, year] = value.split("/")
+                            if (day && month && year) {
+                              setTempDate(
+                                new Date(
+                                  parseInt(year),
+                                  parseInt(month) - 1,
+                                  parseInt(day)
+                                )
+                              )
+                            }
+                          }
+                          setShowDatePicker(true)
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialIcons
+                          name="calendar-today"
+                          size={20}
+                          color="#dc2626"
+                          style={{ marginRight: 10 }}
+                        />
+                        <Text
+                          style={
+                            value ? styles.dateText : styles.datePlaceholder
+                          }
+                        >
+                          {value || "Toca para seleccionar fecha"}
+                        </Text>
+                      </TouchableOpacity>
 
-                    {showDatePicker && Platform.OS === "ios" && (
-                      <View style={styles.iosDatePickerContainer}>
-                        <View style={styles.iosDatePickerHeader}>
-                          <TouchableOpacity
-                            onPress={() => setShowDatePicker(false)}
-                            style={styles.iosDatePickerButton}
-                          >
-                            <Text style={styles.iosDatePickerButtonText}>
-                              Cancelar
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            onPress={() => {
-                              const day = tempDate
-                                .getDate()
-                                .toString()
-                                .padStart(2, "0")
-                              const month = (tempDate.getMonth() + 1)
-                                .toString()
-                                .padStart(2, "0")
-                              const year = tempDate.getFullYear()
-                              onChange(`${day}/${month}/${year}`)
-                              setShowDatePicker(false)
-                            }}
-                            style={styles.iosDatePickerButton}
-                          >
-                            <Text
-                              style={[
-                                styles.iosDatePickerButtonText,
-                                { color: "#dc2626" },
-                              ]}
-                            >
-                              Confirmar
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
+                      {showDatePicker && Platform.OS === "android" && (
                         <DateTimePicker
                           value={tempDate}
                           mode="date"
-                          display="spinner"
+                          display="default"
                           onChange={(
                             event: DateTimePickerEvent,
                             selectedDate?: Date
                           ) => {
-                            if (selectedDate) {
+                            setShowDatePicker(false)
+
+                            if (event.type === "set" && selectedDate) {
+                              const day = selectedDate
+                                .getDate()
+                                .toString()
+                                .padStart(2, "0")
+                              const month = (selectedDate.getMonth() + 1)
+                                .toString()
+                                .padStart(2, "0")
+                              const year = selectedDate.getFullYear()
+                              onChange(`${day}/${month}/${year}`)
                               setTempDate(selectedDate)
                             }
                           }}
                           maximumDate={new Date()}
                           minimumDate={new Date(1900, 0, 1)}
-                          style={styles.iosDatePicker}
-                          textColor="#fff"
                         />
-                      </View>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          />
-          {errors.birthDate && (
-            <Text style={styles.error}>{errors.birthDate.message}</Text>
-          )}
-        </View>
+                      )}
 
-        {/* Dirección */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Dirección<Text style={styles.required}> *</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="address"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={[styles.input, errors.address && styles.inputError]}
-                placeholder="Tu respuesta"
-                placeholderTextColor="#6b7280"
-                value={value}
-                onChangeText={onChange}
-              />
+                      {showDatePicker && Platform.OS === "ios" && (
+                        <View style={styles.iosDatePickerContainer}>
+                          <View style={styles.iosDatePickerHeader}>
+                            <TouchableOpacity
+                              onPress={() => setShowDatePicker(false)}
+                              style={styles.iosDatePickerButton}
+                            >
+                              <Text style={styles.iosDatePickerButtonText}>
+                                Cancelar
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => {
+                                const day = tempDate
+                                  .getDate()
+                                  .toString()
+                                  .padStart(2, "0")
+                                const month = (tempDate.getMonth() + 1)
+                                  .toString()
+                                  .padStart(2, "0")
+                                const year = tempDate.getFullYear()
+                                onChange(`${day}/${month}/${year}`)
+                                setShowDatePicker(false)
+                              }}
+                              style={styles.iosDatePickerButton}
+                            >
+                              <Text
+                                style={[
+                                  styles.iosDatePickerButtonText,
+                                  { color: "#dc2626" },
+                                ]}
+                              >
+                                Confirmar
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                          <DateTimePicker
+                            value={tempDate}
+                            mode="date"
+                            display="spinner"
+                            onChange={(
+                              event: DateTimePickerEvent,
+                              selectedDate?: Date
+                            ) => {
+                              if (selectedDate) {
+                                setTempDate(selectedDate)
+                              }
+                            }}
+                            maximumDate={new Date()}
+                            minimumDate={new Date(1900, 0, 1)}
+                            style={styles.iosDatePicker}
+                            textColor="#fff"
+                          />
+                        </View>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            />
+            {errors.birthDate && (
+              <Text style={styles.error}>{errors.birthDate.message}</Text>
             )}
-          />
-          {errors.address && (
-            <Text style={styles.error}>{errors.address.message}</Text>
-          )}
-        </View>
+          </View>
 
-        {/* ¿Tienes experiencia? */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            ¿Tienes experiencia laboral?<Text style={styles.required}> *</Text>
-          </Text>
-          <Controller
-            control={control}
-            name="hasExperience"
-            render={({ field }) => (
-              <View>
-                <TouchableOpacity
-                  style={styles.radioOption}
-                  onPress={() => field.onChange("si")}
-                >
-                  <View
-                    style={[
-                      styles.radio,
-                      field.value === "si" && styles.radioSelected,
-                    ]}
-                  >
-                    {field.value === "si" && <View style={styles.radioDot} />}
-                  </View>
-                  <Text style={styles.radioLabel}>Sí</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.radioOption}
-                  onPress={() => field.onChange("no")}
-                >
-                  <View
-                    style={[
-                      styles.radio,
-                      field.value === "no" && styles.radioSelected,
-                    ]}
-                  >
-                    {field.value === "no" && <View style={styles.radioDot} />}
-                  </View>
-                  <Text style={styles.radioLabel}>No</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-          {errors.hasExperience && (
-            <Text style={styles.error}>{errors.hasExperience.message}</Text>
-          )}
-        </View>
-
-        {/* Detalles de experiencia (si dijo Sí) */}
-        {hasExperience === "si" && (
+          {/* Dirección */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              Cuéntanos sobre tu experiencia laboral
-            </Text>
-            <Text style={styles.helperText}>
-              ¿Dónde trabajaste antes? ¿Qué hacías?
+              Dirección<Text style={styles.required}> *</Text>
             </Text>
             <Controller
               control={control}
-              name="experienceDetails"
+              name="address"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={[styles.input, errors.address && styles.inputError]}
+                  placeholder="Tu respuesta"
+                  placeholderTextColor="#6b7280"
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+            {errors.address && (
+              <Text style={styles.error}>{errors.address.message}</Text>
+            )}
+          </View>
+
+          {/* ¿Tienes experiencia? */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              ¿Tienes experiencia laboral?
+              <Text style={styles.required}> *</Text>
+            </Text>
+            <Controller
+              control={control}
+              name="hasExperience"
+              render={({ field }) => (
+                <View>
+                  <TouchableOpacity
+                    style={styles.radioOption}
+                    onPress={() => field.onChange("si")}
+                  >
+                    <View
+                      style={[
+                        styles.radio,
+                        field.value === "si" && styles.radioSelected,
+                      ]}
+                    >
+                      {field.value === "si" && <View style={styles.radioDot} />}
+                    </View>
+                    <Text style={styles.radioLabel}>Sí</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.radioOption}
+                    onPress={() => field.onChange("no")}
+                  >
+                    <View
+                      style={[
+                        styles.radio,
+                        field.value === "no" && styles.radioSelected,
+                      ]}
+                    >
+                      {field.value === "no" && <View style={styles.radioDot} />}
+                    </View>
+                    <Text style={styles.radioLabel}>No</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+            {errors.hasExperience && (
+              <Text style={styles.error}>{errors.hasExperience.message}</Text>
+            )}
+          </View>
+
+          {/* Detalles de experiencia (si dijo Sí) */}
+          {hasExperience === "si" && (
+            <View style={styles.field}>
+              <Text style={styles.label}>
+                Cuéntanos sobre tu experiencia laboral
+              </Text>
+              <Text style={styles.helperText}>
+                ¿Dónde trabajaste antes? ¿Qué hacías?
+              </Text>
+              <Controller
+                control={control}
+                name="experienceDetails"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={[styles.textArea]}
+                    placeholder="Ejemplo: Trabajé en un hotel como Housekeeping por 2 años..."
+                    placeholderTextColor="#6b7280"
+                    value={value}
+                    onChangeText={onChange}
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                  />
+                )}
+              />
+            </View>
+          )}
+
+          {/* Experiencia laboral (checkboxes) */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              ¿Qué otra experiencia laboral tienes?
+            </Text>
+            <Controller
+              control={control}
+              name="workExperience"
+              render={({ field }) => (
+                <View>
+                  {experienceOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option}
+                      style={styles.checkboxOption}
+                      onPress={() =>
+                        toggleCheckbox(field, option, field.value || [])
+                      }
+                    >
+                      <View
+                        style={[
+                          styles.checkbox,
+                          field.value?.includes(option) &&
+                            styles.checkboxSelected,
+                        ]}
+                      >
+                        {field.value?.includes(option) && (
+                          <MaterialIcons
+                            name="check"
+                            size={18}
+                            color="#fff"
+                          />
+                        )}
+                      </View>
+                      <Text style={styles.checkboxLabel}>{option}</Text>
+                    </TouchableOpacity>
+                  ))}
+                  {/* Otro */}
+                  <TouchableOpacity
+                    style={styles.checkboxOption}
+                    onPress={() =>
+                      toggleCheckbox(field, "Otro", field.value || [])
+                    }
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        field.value?.includes("Otro") &&
+                          styles.checkboxSelected,
+                      ]}
+                    >
+                      {field.value?.includes("Otro") && (
+                        <MaterialIcons
+                          name="check"
+                          size={18}
+                          color="#fff"
+                        />
+                      )}
+                    </View>
+                    <Text style={styles.checkboxLabel}>Otro:</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          </View>
+
+          {/* Notas adicionales */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Notas adicionales</Text>
+            <Text style={styles.helperText}>
+              ¿Algo más que quieras contarnos? (Opcional)
+            </Text>
+            <Controller
+              control={control}
+              name="additionalNotes"
               render={({ field: { onChange, value } }) => (
                 <TextInput
                   style={[styles.textArea]}
-                  placeholder="Ejemplo: Trabajé en un hotel como Housekeeping por 2 años..."
+                  placeholder="Escribe aquí cualquier información adicional que consideres relevante..."
                   placeholderTextColor="#6b7280"
                   value={value}
                   onChangeText={onChange}
@@ -641,119 +765,31 @@ export default function ApplicationForm() {
               )}
             />
           </View>
-        )}
 
-        {/* Experiencia laboral (checkboxes) */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            ¿Qué otra experiencia laboral tienes?
-          </Text>
-          <Controller
-            control={control}
-            name="workExperience"
-            render={({ field }) => (
-              <View>
-                {experienceOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={styles.checkboxOption}
-                    onPress={() =>
-                      toggleCheckbox(field, option, field.value || [])
-                    }
-                  >
-                    <View
-                      style={[
-                        styles.checkbox,
-                        field.value?.includes(option) &&
-                          styles.checkboxSelected,
-                      ]}
-                    >
-                      {field.value?.includes(option) && (
-                        <MaterialIcons
-                          name="check"
-                          size={18}
-                          color="#fff"
-                        />
-                      )}
-                    </View>
-                    <Text style={styles.checkboxLabel}>{option}</Text>
-                  </TouchableOpacity>
-                ))}
-                {/* Otro */}
-                <TouchableOpacity
-                  style={styles.checkboxOption}
-                  onPress={() =>
-                    toggleCheckbox(field, "Otro", field.value || [])
-                  }
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      field.value?.includes("Otro") && styles.checkboxSelected,
-                    ]}
-                  >
-                    {field.value?.includes("Otro") && (
-                      <MaterialIcons
-                        name="check"
-                        size={18}
-                        color="#fff"
-                      />
-                    )}
-                  </View>
-                  <Text style={styles.checkboxLabel}>Otro:</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        </View>
+          {/* Botones */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.submitButtonText}>
+                {isSubmitting ? "Enviando..." : "Enviar"}
+              </Text>
+            </TouchableOpacity>
 
-        {/* Notas adicionales */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Notas adicionales</Text>
-          <Text style={styles.helperText}>
-            ¿Algo más que quieras contarnos? (Opcional)
-          </Text>
-          <Controller
-            control={control}
-            name="additionalNotes"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={[styles.textArea]}
-                placeholder="Escribe aquí cualquier información adicional que consideres relevante..."
-                placeholderTextColor="#6b7280"
-                value={value}
-                onChangeText={onChange}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            )}
-          />
-        </View>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => router.back()}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* Botones */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
-          >
-            <Text style={styles.submitButtonText}>
-              {isSubmitting ? "Enviando..." : "Enviar"}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => router.back()}
-            disabled={isSubmitting}
-          >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   )
 }
