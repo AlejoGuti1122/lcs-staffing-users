@@ -35,17 +35,16 @@ interface Job {
   requirements?: string[]
   status: string
   imageURL?: string
-  distance?: number // Distancia calculada
+  distance?: number
 }
 
-// Función para calcular distancia en millas usando fórmula de Haversine
 const calculateDistance = (
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ): number => {
-  const R = 3958.8 // Radio de la Tierra en millas
+  const R = 3958.8
   const dLat = ((lat2 - lat1) * Math.PI) / 180
   const dLon = ((lon2 - lon1) * Math.PI) / 180
 
@@ -70,7 +69,6 @@ export default function Index() {
     longitude: number
   } | null>(null)
 
-  // Obtener ubicación del usuario
   useEffect(() => {
     ;(async () => {
       try {
@@ -104,7 +102,6 @@ export default function Index() {
     })()
   }, [])
 
-  // Obtener empleos de Firebase
   useEffect(() => {
     const q = query(
       collection(db, "jobs"),
@@ -118,7 +115,6 @@ export default function Index() {
         ...doc.data(),
       })) as Job[]
 
-      // Si tenemos la ubicación del usuario, calcular distancias
       if (userLocation) {
         const jobsWithDistance = jobsData.map((job) => {
           if (job.latitude && job.longitude) {
@@ -130,10 +126,9 @@ export default function Index() {
             )
             return { ...job, distance }
           }
-          return { ...job, distance: 999999 } // Empleos sin coordenadas al final
+          return { ...job, distance: 999999 }
         })
 
-        // Ordenar por distancia (más cerca primero)
         jobsWithDistance.sort((a, b) => (a.distance || 0) - (b.distance || 0))
         setJobs(jobsWithDistance)
       } else {
@@ -171,18 +166,17 @@ export default function Index() {
           <MaterialIcons
             name="business"
             size={16}
-            color="#666"
+            color="#9ca3af"
           />
           <Text style={styles.company}>{item.company}</Text>
         </View>
 
-        {/* Mostrar distancia en lugar de ubicación completa */}
         {item.distance !== undefined && item.distance < 999999 && (
           <View style={styles.row}>
             <MaterialIcons
               name="near-me"
               size={16}
-              color="#3b82f6"
+              color="#dc2626"
             />
             <Text style={styles.distance}>
               {item.distance < 0.1
@@ -231,7 +225,7 @@ export default function Index() {
       <View style={styles.center}>
         <ActivityIndicator
           size="large"
-          color="#3b82f6"
+          color="#dc2626"
         />
         <Text style={styles.loadingText}>Obteniendo tu ubicación...</Text>
       </View>
@@ -241,8 +235,8 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#fff"
+        barStyle="light-content"
+        backgroundColor="#111"
       />
 
       <View style={styles.header}>
@@ -264,7 +258,7 @@ export default function Index() {
             <MaterialIcons
               name="work-off"
               size={64}
-              color="#ccc"
+              color="#dc2626"
             />
             <Text style={styles.emptyText}>No hay empleos disponibles</Text>
           </View>
@@ -281,49 +275,54 @@ Index.options = {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#111",
   },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#111",
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: "#666",
+    color: "#e5e7eb",
   },
   header: {
-    backgroundColor: "#fff",
+    backgroundColor: "#111",
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomWidth: 3,
+    borderBottomColor: "#dc2626",
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#111",
+    color: "#fff",
   },
   headerSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: "#e5e7eb",
     marginTop: 4,
   },
   list: {
     padding: 16,
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1f1f1f",
     borderRadius: 12,
     marginBottom: 16,
     overflow: "hidden",
-    elevation: 2,
+    elevation: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: "#dc2626",
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
   },
   image: {
     width: "100%",
@@ -335,7 +334,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
+    color: "#fff",
     marginBottom: 8,
   },
   row: {
@@ -345,12 +344,12 @@ const styles = StyleSheet.create({
   },
   company: {
     fontSize: 15,
-    color: "#374151",
+    color: "#d1d5db",
     marginLeft: 6,
   },
   distance: {
     fontSize: 14,
-    color: "#3b82f6",
+    color: "#dc2626",
     fontWeight: "600",
     marginLeft: 6,
   },
@@ -362,7 +361,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 14,
-    color: "#4b5563",
+    color: "#9ca3af",
     lineHeight: 20,
     marginTop: 8,
   },
@@ -372,16 +371,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   tag: {
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#2a2a2a",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
     marginRight: 6,
     marginBottom: 6,
+    borderWidth: 1,
+    borderColor: "#3a3a3a",
   },
   tagText: {
     fontSize: 12,
-    color: "#6b7280",
+    color: "#d1d5db",
   },
   empty: {
     alignItems: "center",
@@ -389,7 +390,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: "#9ca3af",
+    color: "#e5e7eb",
     marginTop: 12,
   },
 })

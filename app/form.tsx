@@ -1,11 +1,16 @@
 // app/application-form.tsx
 import { MaterialIcons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker"
 import { router, useLocalSearchParams } from "expo-router"
 import { addDoc, collection, serverTimestamp } from "firebase/firestore"
+import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
   Alert,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -18,14 +23,26 @@ import { z } from "zod"
 import { db } from "../config/firebase"
 
 const formSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z
+    .string()
+    .min(1, "El correo es requerido")
+    .email("Ingresa un correo válido")
+    .regex(
+      /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      "Formato de correo inválido"
+    ),
   hasTransport: z.enum(["si", "no"], { required_error: "Campo requerido" }),
   hasDocuments: z.enum(["si", "no"], { required_error: "Campo requerido" }),
-  englishLevel: z
-    .array(z.string())
-    .min(1, "Selecciona al menos un nivel de inglés"),
+  englishLevel: z.enum(["Bajo", "Medio", "Alto"], {
+    required_error: "Selecciona un nivel de inglés",
+  }),
   fullName: z.string().min(3, "Nombre completo requerido"),
-  phone: z.string().min(10, "Teléfono requerido"),
+  phone: z
+    .string()
+    .min(1, "El teléfono es requerido")
+    .regex(/^[0-9]+$/, "Solo se permiten números")
+    .min(10, "El teléfono debe tener al menos 10 dígitos")
+    .max(15, "El teléfono no puede tener más de 15 dígitos"),
   birthDate: z.string().min(1, "Fecha de nacimiento requerida"),
   address: z.string().min(5, "Dirección requerida"),
   hasExperience: z.enum(["si", "no"], { required_error: "Campo requerido" }),
@@ -55,6 +72,8 @@ const experienceOptions = [
 
 export default function ApplicationForm() {
   const { jobId, jobTitle } = useLocalSearchParams()
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [tempDate, setTempDate] = useState(new Date())
 
   const {
     control,
@@ -63,17 +82,16 @@ export default function ApplicationForm() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    // ✅ DESPUÉS (correcto)
     defaultValues: {
       email: "",
-      hasTransport: undefined,
-      hasDocuments: undefined,
-      englishLevel: [],
+      hasTransport: undefined as "si" | "no" | undefined,
+      hasDocuments: undefined as "si" | "no" | undefined,
+      englishLevel: undefined as "Bajo" | "Medio" | "Alto" | undefined,
       fullName: "",
       phone: "",
       birthDate: "",
       address: "",
-      hasExperience: undefined,
+      hasExperience: undefined as "si" | "no" | undefined,
       experienceDetails: "",
       workExperience: [],
       additionalNotes: "",
@@ -117,8 +135,8 @@ export default function ApplicationForm() {
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#fff"
+        barStyle="light-content"
+        backgroundColor="#111"
       />
 
       {/* Header */}
@@ -127,7 +145,7 @@ export default function ApplicationForm() {
           <MaterialIcons
             name="arrow-back"
             size={24}
-            color="#111"
+            color="#fff"
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Aplicar al empleo</Text>
@@ -145,18 +163,22 @@ export default function ApplicationForm() {
 
         {/* Email */}
         <View style={styles.field}>
-          <Text style={styles.label}>Correo electrónico</Text>
+          <Text style={styles.label}>
+            Correo electrónico<Text style={styles.required}> *</Text>
+          </Text>
           <Controller
             control={control}
             name="email"
             render={({ field: { onChange, value } }) => (
               <TextInput
                 style={[styles.input, errors.email && styles.inputError]}
-                placeholder="Tu respuesta"
+                placeholder="ejemplo@correo.com"
+                placeholderTextColor="#6b7280"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(text) => onChange(text.trim())}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoCorrect={false}
               />
             )}
           />
@@ -273,26 +295,20 @@ export default function ApplicationForm() {
                 {["Bajo", "Medio", "Alto"].map((level) => (
                   <TouchableOpacity
                     key={level}
-                    style={styles.checkboxOption}
-                    onPress={() =>
-                      toggleCheckbox(field, level, field.value || [])
-                    }
+                    style={styles.radioOption}
+                    onPress={() => field.onChange(level)}
                   >
                     <View
                       style={[
-                        styles.checkbox,
-                        field.value?.includes(level) && styles.checkboxSelected,
+                        styles.radio,
+                        field.value === level && styles.radioSelected,
                       ]}
                     >
-                      {field.value?.includes(level) && (
-                        <MaterialIcons
-                          name="check"
-                          size={18}
-                          color="#fff"
-                        />
+                      {field.value === level && (
+                        <View style={styles.radioDot} />
                       )}
                     </View>
-                    <Text style={styles.checkboxLabel}>{level}</Text>
+                    <Text style={styles.radioLabel}>{level}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -315,6 +331,7 @@ export default function ApplicationForm() {
               <TextInput
                 style={[styles.input, errors.fullName && styles.inputError]}
                 placeholder="Tu respuesta"
+                placeholderTextColor="#6b7280"
                 value={value}
                 onChangeText={onChange}
               />
@@ -327,17 +344,25 @@ export default function ApplicationForm() {
 
         {/* Teléfono */}
         <View style={styles.field}>
-          <Text style={styles.label}>Número de teléfono</Text>
+          <Text style={styles.label}>
+            Número de teléfono<Text style={styles.required}> *</Text>
+          </Text>
           <Controller
             control={control}
             name="phone"
             render={({ field: { onChange, value } }) => (
               <TextInput
                 style={[styles.input, errors.phone && styles.inputError]}
-                placeholder="Tu respuesta"
+                placeholder="1234567890"
+                placeholderTextColor="#6b7280"
                 value={value}
-                onChangeText={onChange}
-                keyboardType="phone-pad"
+                onChangeText={(text) => {
+                  // Solo permitir números
+                  const numericText = text.replace(/[^0-9]/g, "")
+                  onChange(numericText)
+                }}
+                keyboardType="numeric"
+                maxLength={15}
               />
             )}
           />
@@ -355,12 +380,165 @@ export default function ApplicationForm() {
             control={control}
             name="birthDate"
             render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={[styles.input, errors.birthDate && styles.inputError]}
-                placeholder="DD / MM / AAAA"
-                value={value}
-                onChangeText={onChange}
-              />
+              <>
+                {Platform.OS === "web" ? (
+                  // Input nativo para WEB
+                  <View style={styles.dateInput}>
+                    <input
+                      type="date"
+                      value={
+                        value
+                          ? value.split("/").reverse().join("-") // Convertir DD/MM/YYYY a YYYY-MM-DD
+                          : ""
+                      }
+                      onChange={(e) => {
+                        const dateValue = e.target.value // YYYY-MM-DD
+                        if (dateValue) {
+                          const [year, month, day] = dateValue.split("-")
+                          onChange(`${day}/${month}/${year}`) // Guardar como DD/MM/YYYY
+                        } else {
+                          onChange("")
+                        }
+                      }}
+                      max={new Date().toISOString().split("T")[0]} // No permitir fechas futuras
+                      min="1900-01-01"
+                      style={{
+                        width: "100%",
+                        backgroundColor: "transparent",
+                        border: "none",
+                        outline: "none",
+                        color: "#fff",
+                        fontSize: 16,
+                        fontFamily: "inherit",
+                        cursor: "pointer",
+                      }}
+                    />
+                  </View>
+                ) : (
+                  // DatePicker para móviles
+                  <>
+                    <TouchableOpacity
+                      style={[
+                        styles.dateInput,
+                        errors.birthDate && styles.inputError,
+                      ]}
+                      onPress={() => {
+                        if (value) {
+                          const [day, month, year] = value.split("/")
+                          if (day && month && year) {
+                            setTempDate(
+                              new Date(
+                                parseInt(year),
+                                parseInt(month) - 1,
+                                parseInt(day)
+                              )
+                            )
+                          }
+                        }
+                        setShowDatePicker(true)
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialIcons
+                        name="calendar-today"
+                        size={20}
+                        color="#dc2626"
+                        style={{ marginRight: 10 }}
+                      />
+                      <Text
+                        style={value ? styles.dateText : styles.datePlaceholder}
+                      >
+                        {value || "Toca para seleccionar fecha"}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {showDatePicker && Platform.OS === "android" && (
+                      <DateTimePicker
+                        value={tempDate}
+                        mode="date"
+                        display="default"
+                        onChange={(
+                          event: DateTimePickerEvent,
+                          selectedDate?: Date
+                        ) => {
+                          setShowDatePicker(false)
+
+                          if (event.type === "set" && selectedDate) {
+                            const day = selectedDate
+                              .getDate()
+                              .toString()
+                              .padStart(2, "0")
+                            const month = (selectedDate.getMonth() + 1)
+                              .toString()
+                              .padStart(2, "0")
+                            const year = selectedDate.getFullYear()
+                            onChange(`${day}/${month}/${year}`)
+                            setTempDate(selectedDate)
+                          }
+                        }}
+                        maximumDate={new Date()}
+                        minimumDate={new Date(1900, 0, 1)}
+                      />
+                    )}
+
+                    {showDatePicker && Platform.OS === "ios" && (
+                      <View style={styles.iosDatePickerContainer}>
+                        <View style={styles.iosDatePickerHeader}>
+                          <TouchableOpacity
+                            onPress={() => setShowDatePicker(false)}
+                            style={styles.iosDatePickerButton}
+                          >
+                            <Text style={styles.iosDatePickerButtonText}>
+                              Cancelar
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => {
+                              const day = tempDate
+                                .getDate()
+                                .toString()
+                                .padStart(2, "0")
+                              const month = (tempDate.getMonth() + 1)
+                                .toString()
+                                .padStart(2, "0")
+                              const year = tempDate.getFullYear()
+                              onChange(`${day}/${month}/${year}`)
+                              setShowDatePicker(false)
+                            }}
+                            style={styles.iosDatePickerButton}
+                          >
+                            <Text
+                              style={[
+                                styles.iosDatePickerButtonText,
+                                { color: "#dc2626" },
+                              ]}
+                            >
+                              Confirmar
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <DateTimePicker
+                          value={tempDate}
+                          mode="date"
+                          display="spinner"
+                          onChange={(
+                            event: DateTimePickerEvent,
+                            selectedDate?: Date
+                          ) => {
+                            if (selectedDate) {
+                              setTempDate(selectedDate)
+                            }
+                          }}
+                          maximumDate={new Date()}
+                          minimumDate={new Date(1900, 0, 1)}
+                          style={styles.iosDatePicker}
+                          textColor="#fff"
+                        />
+                      </View>
+                    )}
+                  </>
+                )}
+              </>
             )}
           />
           {errors.birthDate && (
@@ -380,6 +558,7 @@ export default function ApplicationForm() {
               <TextInput
                 style={[styles.input, errors.address && styles.inputError]}
                 placeholder="Tu respuesta"
+                placeholderTextColor="#6b7280"
                 value={value}
                 onChangeText={onChange}
               />
@@ -452,6 +631,7 @@ export default function ApplicationForm() {
                 <TextInput
                   style={[styles.textArea]}
                   placeholder="Ejemplo: Trabajé en un hotel como Housekeeping por 2 años..."
+                  placeholderTextColor="#6b7280"
                   value={value}
                   onChangeText={onChange}
                   multiline
@@ -465,7 +645,9 @@ export default function ApplicationForm() {
 
         {/* Experiencia laboral (checkboxes) */}
         <View style={styles.field}>
-          <Text style={styles.label}>¿Qué experiencia laboral tienes?</Text>
+          <Text style={styles.label}>
+            ¿Qué otra experiencia laboral tienes?
+          </Text>
           <Controller
             control={control}
             name="workExperience"
@@ -538,6 +720,7 @@ export default function ApplicationForm() {
               <TextInput
                 style={[styles.textArea]}
                 placeholder="Escribe aquí cualquier información adicional que consideres relevante..."
+                placeholderTextColor="#6b7280"
                 value={value}
                 onChangeText={onChange}
                 multiline
@@ -578,51 +761,55 @@ export default function ApplicationForm() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#111",
   },
   header: {
-    backgroundColor: "#fff",
+    backgroundColor: "#111",
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomWidth: 3,
+    borderBottomColor: "#dc2626",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#111",
+    color: "#fff",
   },
   content: {
     flex: 1,
     padding: 20,
   },
   jobInfo: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1f1f1f",
     padding: 16,
     borderRadius: 12,
     marginBottom: 20,
     borderLeftWidth: 4,
-    borderLeftColor: "#3b82f6",
+    borderLeftColor: "#dc2626",
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
   },
   jobTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
+    color: "#fff",
   },
   field: {
     marginBottom: 24,
-    backgroundColor: "#fff",
+    backgroundColor: "#1f1f1f",
     padding: 16,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
   },
   label: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
+    color: "#fff",
     marginBottom: 12,
   },
   required: {
@@ -630,29 +817,29 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 14,
-    color: "#6b7280",
+    color: "#9ca3af",
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#3a3a3a",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: "#111",
-    backgroundColor: "#fff",
+    color: "#fff",
+    backgroundColor: "#2a2a2a",
   },
   inputError: {
     borderColor: "#dc2626",
   },
   textArea: {
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: "#3a3a3a",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: "#111",
-    backgroundColor: "#fff",
+    color: "#fff",
+    backgroundColor: "#2a2a2a",
     minHeight: 100,
   },
   error: {
@@ -670,22 +857,22 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#d1d5db",
+    borderColor: "#3a3a3a",
     alignItems: "center",
     justifyContent: "center",
   },
   radioSelected: {
-    borderColor: "#3b82f6",
+    borderColor: "#dc2626",
   },
   radioDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#dc2626",
   },
   radioLabel: {
     fontSize: 16,
-    color: "#374151",
+    color: "#d1d5db",
     marginLeft: 12,
   },
   checkboxOption: {
@@ -698,19 +885,63 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: "#d1d5db",
+    borderColor: "#3a3a3a",
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxSelected: {
-    backgroundColor: "#3b82f6",
-    borderColor: "#3b82f6",
+    backgroundColor: "#dc2626",
+    borderColor: "#dc2626",
   },
   checkboxLabel: {
     fontSize: 16,
-    color: "#374151",
+    color: "#d1d5db",
     marginLeft: 12,
     flex: 1,
+  },
+  dateInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#3a3a3a",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#2a2a2a",
+  },
+  dateText: {
+    fontSize: 16,
+    color: "#fff",
+  },
+  datePlaceholder: {
+    fontSize: 16,
+    color: "#6b7280",
+  },
+  iosDatePickerContainer: {
+    backgroundColor: "#1f1f1f",
+    borderRadius: 12,
+    marginTop: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  iosDatePickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+  },
+  iosDatePickerButton: {
+    padding: 5,
+  },
+  iosDatePickerButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#9ca3af",
+  },
+  iosDatePicker: {
+    height: 200,
   },
   buttonContainer: {
     marginTop: 20,
@@ -731,6 +962,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#dc2626",
   },
   cancelButtonText: {
     color: "#dc2626",
