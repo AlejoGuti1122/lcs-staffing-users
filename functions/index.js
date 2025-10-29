@@ -20,8 +20,8 @@ exports.sendApplicationEmail = onDocumentCreated(
     const application = event.data.data()
 
     const msg = {
-      to: "c.gutierrez.d.alejandro@gmail.com",
-      from: "c.gutierrez.d.alejandro@gmail.com", // Debe estar verificado en SendGrid
+      to: "lcssstafing@gmail.com",
+      from: "lcssstafing@gmail.com",
       subject: `Nueva aplicación: ${application.jobTitle}`,
       html: `
         <h2>Nueva Aplicación Recibida</h2>
