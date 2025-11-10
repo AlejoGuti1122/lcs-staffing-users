@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#111",
-    paddingTop: 60,
+    paddingTop: 40,
     paddingHorizontal: 20,
     paddingBottom: 16,
     flexDirection: "row",
