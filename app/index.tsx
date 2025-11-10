@@ -239,12 +239,21 @@ export default function Index() {
         backgroundColor="#111"
       />
 
+      {/* ✨ HEADER CON LOGO */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Empleos Disponibles</Text>
-        <Text style={styles.headerSubtitle}>
-          {jobs.length} empleos activos
-          {userLocation && " • Ordenados por distancia"}
-        </Text>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoBox}>
+            <Text style={styles.logoText}>LCS</Text>
+          </View>
+          <Text style={styles.logoTitle}>Staffing</Text>
+        </View>
+
+        <View style={styles.headerInfo}>
+          <Text style={styles.headerSubtitle}>
+            {jobs.length} empleos activos
+            {userLocation && " • Ordenados por distancia"}
+          </Text>
+        </View>
       </View>
 
       <FlatList
@@ -296,6 +305,32 @@ const styles = StyleSheet.create({
     borderBottomWidth: 3,
     borderBottomColor: "#dc2626",
   },
+  // ✨ ESTILOS DEL LOGO
+  logoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  logoBox: {
+    backgroundColor: "#dc2626",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 4,
+  },
+  logoText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  logoTitle: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginLeft: 12,
+  },
+  headerInfo: {
+    marginTop: 4,
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: "bold",
@@ -304,7 +339,6 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: "#e5e7eb",
-    marginTop: 4,
   },
   list: {
     padding: 16,

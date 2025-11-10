@@ -172,7 +172,15 @@ export default function ApplicationForm() {
             color="#fff"
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Aplicar al empleo</Text>
+        <View style={styles.headerContent}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoBox}>
+              <Text style={styles.logoText}>LCS</Text>
+            </View>
+            <Text style={styles.logoTitle}>Staffing</Text>
+          </View>
+          <Text style={styles.headerTitle}>Aplicar al empleo</Text>
+        </View>
         <View style={{ width: 24 }} />
       </View>
 
@@ -811,9 +819,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#dc2626",
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#9ca3af",
   },
   content: {
     flex: 1,
@@ -1005,5 +1013,31 @@ const styles = StyleSheet.create({
     color: "#dc2626",
     fontSize: 16,
     fontWeight: "500",
+  },
+
+  headerContent: {
+    alignItems: "center",
+  },
+  logoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  logoBox: {
+    backgroundColor: "#dc2626",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  logoText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  logoTitle: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 8,
   },
 })
