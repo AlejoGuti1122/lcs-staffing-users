@@ -71,9 +71,9 @@ exports.sendApplicationEmail = onDocumentCreated(
 
       // ✨ PASO 4: Enviar el correo al admin correcto
       const msg = {
-        to: adminEmail,
-        from: "LCS Staffing <lcsstaffing.app@gmail.com>",
-        subject: `Nueva postulación | LCS Staffing`,
+        to: adminEmail, // ✨ Email dinámico del admin que publicó el empleo
+        from: "lcsstaffing.app@gmail.com",
+        subject: `Nueva aplicación: ${application.jobTitle}`,
         html: `
           <h2>Nueva Aplicación Recibida</h2>
           <p><strong>Empleo:</strong> ${application.jobTitle}</p>
