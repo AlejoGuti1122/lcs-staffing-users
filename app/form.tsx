@@ -382,6 +382,7 @@ export default function ApplicationForm() {
           </View>
 
           {/* Teléfono */}
+          {/* Teléfono */}
           <View style={styles.field}>
             <Text style={styles.label}>
               Número de teléfono<Text style={styles.required}> *</Text>
@@ -389,21 +390,46 @@ export default function ApplicationForm() {
             <Controller
               control={control}
               name="phone"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={[styles.input, errors.phone && styles.inputError]}
-                  placeholder="1234567890"
-                  placeholderTextColor="#6b7280"
-                  value={value}
-                  onChangeText={(text) => {
-                    // Solo permitir números
-                    const numericText = text.replace(/[^0-9]/g, "")
-                    onChange(numericText)
-                  }}
-                  keyboardType="numeric"
-                  maxLength={15}
-                />
-              )}
+              render={({ field: { onChange, value } }) => {
+                const phoneLength = value?.length || 0
+                const isValid = phoneLength === 10
+                const showValidation = phoneLength > 0
+
+                return (
+                  <>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        errors.phone && styles.inputError,
+                        showValidation && !isValid && styles.inputError,
+                        showValidation && isValid && styles.inputSuccess,
+                      ]}
+                      placeholder="1234567890"
+                      placeholderTextColor="#6b7280"
+                      value={value}
+                      onChangeText={(text) => {
+                        // Solo permitir números
+                        const numericText = text.replace(/[^0-9]/g, "")
+                        onChange(numericText)
+                      }}
+                      keyboardType="numeric"
+                      maxLength={15}
+                    />
+                    {showValidation && (
+                      <Text
+                        style={[
+                          styles.phoneCounter,
+                          isValid
+                            ? styles.phoneCounterValid
+                            : styles.phoneCounterInvalid,
+                        ]}
+                      >
+                        {phoneLength}/10 dígitos {isValid ? "✓" : ""}
+                      </Text>
+                    )}
+                  </>
+                )
+              }}
             />
             {errors.phone && (
               <Text style={styles.error}>{errors.phone.message}</Text>
@@ -1039,5 +1065,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 8,
+  },
+  inputSuccess: {
+    borderColor: "#22c55e",
+  },
+  phoneCounter: {
+    fontSize: 14,
+    marginTop: 6,
+  },
+  phoneCounterValid: {
+    color: "#22c55e",
+  },
+  phoneCounterInvalid: {
+    color: "#dc2626",
   },
 })
