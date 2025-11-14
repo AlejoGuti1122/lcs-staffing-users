@@ -241,12 +241,16 @@ export default function Index() {
 
       {/* ✨ HEADER CON LOGO */}
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoBox}>
-            <Text style={styles.logoText}>LCS</Text>
-          </View>
-          <Text style={styles.logoTitle}>Staffing</Text>
-        </View>
+        <Image
+          source={require("../assets/images/logo.png")}
+          style={{
+            width: 120,
+            height: 40,
+            resizeMode: "contain",
+            marginBottom: 12,
+            marginTop: 28,
+          }}
+        />
 
         <View style={styles.headerInfo}>
           <Text style={styles.headerSubtitle}>

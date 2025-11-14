@@ -10,6 +10,7 @@ import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -173,12 +174,16 @@ export default function ApplicationForm() {
           />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logoBox}>
-              <Text style={styles.logoText}>LCS</Text>
-            </View>
-            <Text style={styles.logoTitle}>Staffing</Text>
-          </View>
+          <Image
+            source={require("../assets/images/logo.png")}
+            style={{
+              width: 100,
+              height: 35,
+              resizeMode: "contain",
+              marginBottom: 10,
+              marginTop: 24,
+            }}
+          />
           <Text style={styles.headerTitle}>Aplicar al empleo</Text>
         </View>
         <View style={{ width: 24 }} />
