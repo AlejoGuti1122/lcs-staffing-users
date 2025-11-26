@@ -68,12 +68,13 @@ exports.sendApplicationEmail = onDocumentCreated(
       }
 
       console.log("✅ Enviando correo al admin:", adminEmail)
+      console.log("✅ Enviando correo al candidato:", application.email)
 
-      // ✨ PASO 4: Enviar el correo al admin correcto
-      const msg = {
-        to: adminEmail, // ✨ Email dinámico del admin que publicó el empleo
+      // ✨ CORREO 1: Al Account Manager (admin que creó el empleo)
+      const adminMsg = {
+        to: adminEmail,
         from: "app@lcsstaffing.com",
-        subject: `Nueva postulación | LCS Staffing`,
+        subject: `Nueva Postulación Recibida – ${application.jobTitle}`,
         html: `
           <h2>Nueva Postulación Recibida</h2>
           <p><strong>Empleo:</strong> ${application.jobTitle}</p>
@@ -109,8 +110,50 @@ exports.sendApplicationEmail = onDocumentCreated(
         `,
       }
 
-      await sgMail.send(msg)
-      console.log("✅ Email enviado exitosamente a:", adminEmail)
+      // ✨ CORREO 2: Al candidato (confirmación)
+      const candidateMsg = {
+        to: application.email,
+        from: "app@lcsstaffing.com",
+        subject: `Confirmación de Postulación – ${application.jobTitle}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #3b82f6;">¡Gracias por tu postulación!</h2>
+            <p>Hola <strong>${application.fullName}</strong>,</p>
+            <p>Hemos recibido tu postulación para el puesto de <strong>${
+              application.jobTitle
+            }</strong>.</p>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0;">Resumen de tu postulación:</h3>
+              <p><strong>Puesto:</strong> ${application.jobTitle}</p>
+              <p><strong>Fecha de postulación:</strong> ${new Date().toLocaleDateString(
+                "es-ES"
+              )}</p>
+            </div>
+
+            <p>Nuestro equipo revisará tu información y nos pondremos en contacto contigo pronto.</p>
+            
+            <p style="margin-top: 30px;">Saludos cordiales,<br>
+            <strong>Equipo de LCS Staffing</strong></p>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+            <p style="font-size: 12px; color: #6b7280;">
+              Este es un correo automático, por favor no respondas a este mensaje.
+            </p>
+          </div>
+        `,
+      }
+
+      // ✨ Enviar ambos correos
+      await sgMail.send(adminMsg)
+      console.log("✅ Email enviado exitosamente al admin:", adminEmail)
+
+      await sgMail.send(candidateMsg)
+      console.log(
+        "✅ Email enviado exitosamente al candidato:",
+        application.email
+      )
+
       return null
     } catch (error) {
       console.error("❌ Error en sendApplicationEmail:", error)

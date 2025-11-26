@@ -51,9 +51,6 @@ const formSchema = z.object({
   experienceDetails: z.string().optional(),
   workExperience: z.array(z.string()),
   additionalNotes: z.string().optional(),
-  acceptDataTreatment: z.boolean().refine((val) => val === true, {
-    message: "Debes aceptar el tratamiento de datos personales",
-  }),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -100,7 +97,6 @@ export default function ApplicationForm() {
       experienceDetails: "",
       workExperience: [],
       additionalNotes: "",
-      acceptDataTreatment: false,
     },
   })
 
@@ -119,8 +115,7 @@ export default function ApplicationForm() {
     formValues.phone?.length === 10 &&
     formValues.birthDate?.length > 0 &&
     formValues.address?.length >= 5 &&
-    formValues.hasExperience !== undefined &&
-    formValues.acceptDataTreatment === true
+    formValues.hasExperience !== undefined
 
   const onSubmit = async (data: FormData) => {
     console.log("🚀 Iniciando envío...")
@@ -822,54 +817,6 @@ export default function ApplicationForm() {
                 />
               )}
             />
-          </View>
-
-          {/* Tratamiento de datos */}
-          <View style={styles.field}>
-            <Text style={styles.label}>
-              Tratamiento de Datos Personales
-              <Text style={styles.required}> *</Text>
-            </Text>
-            <Controller
-              control={control}
-              name="acceptDataTreatment"
-              render={({ field }) => (
-                <TouchableOpacity
-                  style={styles.checkboxOption}
-                  onPress={() => field.onChange(!field.value)}
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      field.value && styles.checkboxSelected,
-                    ]}
-                  >
-                    {field.value && (
-                      <MaterialIcons
-                        name="check"
-                        size={18}
-                        color="#fff"
-                      />
-                    )}
-                  </View>
-                  <Text style={styles.checkboxLabel}>
-                    He leído y acepto la Política de Tratamiento de Datos
-                    Personales y autorizo el uso de mis datos conforme a la Ley
-                    1581 de 2012
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-            {errors.acceptDataTreatment && (
-              <Text style={styles.error}>
-                {errors.acceptDataTreatment.message}
-              </Text>
-            )}
-            <Text style={styles.helperText}>
-              Tus datos serán utilizados únicamente para procesos de selección y
-              contacto laboral. Puedes solicitar su modificación o eliminación
-              en cualquier momento.
-            </Text>
           </View>
 
           {/* Botones */}
