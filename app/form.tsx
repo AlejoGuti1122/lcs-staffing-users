@@ -50,6 +50,8 @@ const formSchema = z.object({
   hasExperience: z.enum(["si", "no"], { required_error: "Campo requerido" }),
   experienceDetails: z.string().optional(),
   workExperience: z.array(z.string()),
+  experienceLocation: z.string().optional(), // ← NUEVO
+  experienceTimePeriod: z.string().optional(),
   additionalNotes: z.string().optional(),
 })
 
@@ -96,6 +98,8 @@ export default function ApplicationForm() {
       hasExperience: undefined as "si" | "no" | undefined,
       experienceDetails: "",
       workExperience: [],
+      experienceLocation: "", // ← NUEVO
+      experienceTimePeriod: "",
       additionalNotes: "",
     },
   })
@@ -795,6 +799,52 @@ export default function ApplicationForm() {
             />
           </View>
 
+          {/* ← ESTA ES LA SECCIÓN NUEVA QUE AGREGUÉ */}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              ¿Dónde y cuándo tuviste esta experiencia?
+            </Text>
+            <Text style={styles.helperText}>
+              Cuéntanos en qué lugar y durante qué período trabajaste
+            </Text>
+
+            {/* Lugar de trabajo */}
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.subLabel}>Lugar de trabajo</Text>
+              <Controller
+                control={control}
+                name="experienceLocation"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={[styles.input]}
+                    placeholder="Ejemplo: Hotel Marriott en Orlando, FL"
+                    placeholderTextColor="#6b7280"
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                )}
+              />
+            </View>
+
+            {/* Período de tiempo */}
+            <View>
+              <Text style={styles.subLabel}>Período de tiempo</Text>
+              <Controller
+                control={control}
+                name="experienceTimePeriod"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={[styles.input]}
+                    placeholder="Ejemplo: Enero 2020 - Diciembre 2022"
+                    placeholderTextColor="#6b7280"
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                )}
+              />
+            </View>
+          </View>
+
           {/* Notas adicionales */}
           <View style={styles.field}>
             <Text style={styles.label}>Notas adicionales</Text>
@@ -1103,5 +1153,12 @@ const styles = StyleSheet.create({
   submitButtonDisabled: {
     backgroundColor: "#4a4a4a",
     opacity: 0.5,
+  },
+  subLabel: {
+    // ← NUEVO ESTILO
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#d1d5db",
+    marginBottom: 8,
   },
 })

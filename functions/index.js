@@ -32,7 +32,7 @@ exports.sendApplicationEmail = onDocumentCreated(
         return null
       }
 
-      // ✨ PASO 2: Obtener el empleo para saber quién lo creó
+      // ✨ PASO 2: Obtener el empleo para saber quién lo maneja
       const jobDoc = await db.collection("jobs").doc(application.jobId).get()
 
       if (!jobDoc.exists) {
@@ -41,20 +41,26 @@ exports.sendApplicationEmail = onDocumentCreated(
       }
 
       const jobData = jobDoc.data()
-      const createdByUid = jobData.createdBy
 
-      if (!createdByUid) {
-        console.error("❌ El empleo no tiene createdBy definido")
+      // 🔥 CAMBIO IMPORTANTE: Buscar accountManager primero, si no existe usar createdBy
+      const accountManagerUid = jobData.accountManager || jobData.createdBy
+
+      if (!accountManagerUid) {
+        console.error(
+          "❌ El empleo no tiene accountManager ni createdBy definido"
+        )
         return null
       }
 
-      // ✨ PASO 3: Obtener el email del admin que creó el empleo
-      const adminDoc = await db.collection("users").doc(createdByUid).get()
+      console.log("📧 Account Manager UID:", accountManagerUid)
+
+      // ✨ PASO 3: Obtener el email del Account Manager actual
+      const adminDoc = await db.collection("users").doc(accountManagerUid).get()
 
       if (!adminDoc.exists) {
         console.error(
           "❌ No se encontró el usuario admin con UID:",
-          createdByUid
+          accountManagerUid
         )
         return null
       }
@@ -63,14 +69,14 @@ exports.sendApplicationEmail = onDocumentCreated(
       const adminEmail = adminData.email
 
       if (!adminEmail) {
-        console.error("❌ El admin no tiene email configurado")
+        console.error("❌ El Account Manager no tiene email configurado")
         return null
       }
 
-      console.log("✅ Enviando correo al admin:", adminEmail)
+      console.log("✅ Enviando correo al Account Manager:", adminEmail)
       console.log("✅ Enviando correo al candidato:", application.email)
 
-      // ✨ CORREO 1: Al Account Manager (admin que creó el empleo)
+      // ✨ CORREO 1: Al Account Manager actual
       const adminMsg = {
         to: adminEmail,
         from: "app@lcsstaffing.com",
@@ -100,6 +106,16 @@ exports.sendApplicationEmail = onDocumentCreated(
               ? `<p><strong>Experiencia laboral:</strong> ${application.workExperience.join(
                   ", "
                 )}</p>`
+              : ""
+          }
+          ${
+            application.experienceLocation
+              ? `<p><strong>Lugar de trabajo:</strong> ${application.experienceLocation}</p>`
+              : ""
+          }
+          ${
+            application.experienceTimePeriod
+              ? `<p><strong>Período:</strong> ${application.experienceTimePeriod}</p>`
               : ""
           }
           ${
@@ -146,7 +162,10 @@ exports.sendApplicationEmail = onDocumentCreated(
 
       // ✨ Enviar ambos correos
       await sgMail.send(adminMsg)
-      console.log("✅ Email enviado exitosamente al admin:", adminEmail)
+      console.log(
+        "✅ Email enviado exitosamente al Account Manager:",
+        adminEmail
+      )
 
       await sgMail.send(candidateMsg)
       console.log(

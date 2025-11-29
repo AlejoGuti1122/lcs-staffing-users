@@ -241,22 +241,17 @@ export default function Index() {
 
       {/* ✨ HEADER CON LOGO */}
       <View style={styles.header}>
-        <Image
-          source={require("../assets/images/logo.png")}
-          style={{
-            width: 120,
-            height: 40,
-            resizeMode: "contain",
-            marginBottom: 12,
-            marginTop: 28,
-          }}
-        />
-
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerSubtitle}>
-            {jobs.length} empleos activos
-            {userLocation && " • Ordenados por distancia"}
-          </Text>
+        <View style={styles.headerContent}>
+          <Image
+            source={require("../assets/images/logo.png")}
+            style={styles.logo}
+          />
+          <View style={styles.headerInfo}>
+            <Text style={styles.headerSubtitle}>
+              {jobs.length} empleos activos
+              {userLocation && " • Ordenados por distancia"}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -303,12 +298,27 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#111",
-    paddingTop: 30,
+    paddingTop: 8,
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 3,
     borderBottomColor: "#dc2626",
   },
+
+  headerContent: {
+    // ← NUEVO estilo
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 14,
+  },
+  logo: {
+    // ← NUEVO estilo
+    width: 120,
+    height: 40,
+    resizeMode: "contain",
+    marginRight: 16,
+  },
+
   // ✨ ESTILOS DEL LOGO
   logoContainer: {
     flexDirection: "row",
@@ -334,6 +344,8 @@ const styles = StyleSheet.create({
   },
   headerInfo: {
     marginTop: 4,
+    flex: 1, // ← Agregué flex
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 28,
