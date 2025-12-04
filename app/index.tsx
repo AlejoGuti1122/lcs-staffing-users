@@ -199,7 +199,7 @@ export default function Index() {
 
         <Text
           style={styles.description}
-          numberOfLines={2}
+         
         >
           {item.description}
         </Text>
