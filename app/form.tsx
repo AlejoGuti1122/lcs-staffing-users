@@ -8,6 +8,7 @@ import { router, useLocalSearchParams } from "expo-router"
 import { addDoc, collection, serverTimestamp } from "firebase/firestore"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import {
   Alert,
   Image,
@@ -23,39 +24,7 @@ import {
 } from "react-native"
 import { z } from "zod"
 import { db } from "../config/firebase"
-
-const formSchema = z.object({
-  email: z
-    .string()
-    .min(1, "El correo es requerido")
-    .email("Ingresa un correo válido")
-    .regex(
-      /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      "Formato de correo inválido"
-    ),
-  hasTransport: z.enum(["si", "no"], { required_error: "Campo requerido" }),
-  hasDocuments: z.enum(["si", "no"], { required_error: "Campo requerido" }),
-  englishLevel: z.enum(["Bajo", "Medio", "Alto"], {
-    required_error: "Selecciona un nivel de inglés",
-  }),
-  fullName: z.string().min(3, "Nombre completo requerido"),
-  phone: z
-    .string()
-    .min(1, "El teléfono es requerido")
-    .regex(/^[0-9]+$/, "Solo se permiten números")
-    .min(10, "El teléfono debe tener al menos 10 dígitos")
-    .max(15, "El teléfono no puede tener más de 15 dígitos"),
-  birthDate: z.string().min(1, "Fecha de nacimiento requerida"),
-  address: z.string().min(5, "Dirección requerida"),
-  hasExperience: z.enum(["si", "no"], { required_error: "Campo requerido" }),
-  experienceDetails: z.string().optional(),
-  workExperience: z.array(z.string()),
-  experienceLocation: z.string().optional(), // ← NUEVO
-  experienceTimePeriod: z.string().optional(),
-  additionalNotes: z.string().optional(),
-})
-
-type FormData = z.infer<typeof formSchema>
+import LanguageSelector from "./components/LanguageSelector"
 
 const experienceOptions = [
   "Housekeeping",
@@ -76,8 +45,49 @@ const experienceOptions = [
 
 export default function ApplicationForm() {
   const { jobId, jobTitle } = useLocalSearchParams()
+  const { t } = useTranslation()
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [tempDate, setTempDate] = useState(new Date())
+
+  // Schema con traducciones
+  const formSchema = z.object({
+    email: z
+      .string()
+      .min(1, t("form.emailRequired"))
+      .email(t("form.emailInvalid"))
+      .regex(
+        /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        t("form.emailInvalid")
+      ),
+    hasTransport: z.enum(["si", "no"], {
+      required_error: t("form.emailRequired"),
+    }),
+    hasDocuments: z.enum(["si", "no"], {
+      required_error: t("form.emailRequired"),
+    }),
+    englishLevel: z.enum(["Bajo", "Medio", "Alto"], {
+      required_error: t("form.emailRequired"),
+    }),
+    fullName: z.string().min(3, t("form.fullNameRequired")),
+    phone: z
+      .string()
+      .min(1, t("form.phoneRequired"))
+      .regex(/^[0-9]+$/, "Solo números")
+      .min(10, "Mínimo 10 dígitos")
+      .max(15, "Máximo 15 dígitos"),
+    birthDate: z.string().min(1, t("form.birthDateRequired")),
+    address: z.string().min(5, t("form.addressRequired")),
+    hasExperience: z.enum(["si", "no"], {
+      required_error: t("form.emailRequired"),
+    }),
+    experienceDetails: z.string().optional(),
+    workExperience: z.array(z.string()),
+    experienceLocation: z.string().optional(),
+    experienceTimePeriod: z.string().optional(),
+    additionalNotes: z.string().optional(),
+  })
+
+  type FormData = z.infer<typeof formSchema>
 
   const {
     control,
@@ -98,18 +108,15 @@ export default function ApplicationForm() {
       hasExperience: undefined as "si" | "no" | undefined,
       experienceDetails: "",
       workExperience: [],
-      experienceLocation: "", // ← NUEVO
+      experienceLocation: "",
       experienceTimePeriod: "",
       additionalNotes: "",
     },
   })
 
   const hasExperience = watch("hasExperience")
-
-  // Observar todos los campos obligatorios
   const formValues = watch()
 
-  // Validar si todos los campos obligatorios están completos
   const isFormValid =
     formValues.email?.length > 0 &&
     formValues.hasTransport !== undefined &&
@@ -122,11 +129,7 @@ export default function ApplicationForm() {
     formValues.hasExperience !== undefined
 
   const onSubmit = async (data: FormData) => {
-    console.log("🚀 Iniciando envío...")
-
     try {
-      console.log("📝 Guardando en Firestore...")
-
       await addDoc(collection(db, "applications"), {
         ...data,
         jobId,
@@ -135,32 +138,21 @@ export default function ApplicationForm() {
         createdAt: serverTimestamp(),
       })
 
-      console.log("✅ Guardado exitoso, mostrando alerta...")
-
-      // Para WEB usa window.alert, para móvil usa Alert.alert
       if (Platform.OS === "web") {
         window.alert(
-          "✅ ¡Aplicación enviada!\n\nTu aplicación ha sido enviada exitosamente. Te contactaremos pronto."
+          `✅ ${t("form.successTitle")}\n\n${t("form.successMessage")}`
         )
         router.back()
       } else {
-        Alert.alert(
-          "¡Aplicación enviada!",
-          "Tu aplicación ha sido enviada exitosamente. Te contactaremos pronto.",
-          [{ text: "OK", onPress: () => router.back() }]
-        )
+        Alert.alert(t("form.successTitle"), t("form.successMessage"), [
+          { text: t("form.ok"), onPress: () => router.back() },
+        ])
       }
-
-      console.log("✅ Alerta mostrada")
     } catch (error) {
-      console.error("❌ Error:", error)
-
       if (Platform.OS === "web") {
-        window.alert(
-          "❌ Error\n\nNo se pudo enviar la aplicación. Intenta de nuevo."
-        )
+        window.alert(`❌ ${t("form.errorTitle")}\n\n${t("form.errorMessage")}`)
       } else {
-        Alert.alert("Error", "No se pudo enviar la aplicación")
+        Alert.alert(t("form.errorTitle"), t("form.errorMessage"))
       }
     }
   }
@@ -203,9 +195,9 @@ export default function ApplicationForm() {
               marginTop: 24,
             }}
           />
-          <Text style={styles.headerTitle}>Aplicar al empleo</Text>
+          <Text style={styles.headerTitle}>{t("form.title")}</Text>
         </View>
-        <View style={{ width: 24 }} />
+        <LanguageSelector />
       </View>
 
       <KeyboardAvoidingView
@@ -218,7 +210,6 @@ export default function ApplicationForm() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Job Title */}
           <View style={styles.jobInfo}>
             <Text style={styles.jobTitle}>{jobTitle}</Text>
           </View>
@@ -226,7 +217,8 @@ export default function ApplicationForm() {
           {/* Email */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              Correo electrónico<Text style={styles.required}> *</Text>
+              {t("form.email")}
+              <Text style={styles.required}>{t("form.required")}</Text>
             </Text>
             <Controller
               control={control}
@@ -234,7 +226,7 @@ export default function ApplicationForm() {
               render={({ field: { onChange, value } }) => (
                 <TextInput
                   style={[styles.input, errors.email && styles.inputError]}
-                  placeholder="ejemplo@correo.com"
+                  placeholder={t("form.emailPlaceholder")}
                   placeholderTextColor="#6b7280"
                   value={value}
                   onChangeText={(text) => onChange(text.trim())}
@@ -252,8 +244,8 @@ export default function ApplicationForm() {
           {/* Transporte */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              ¿Tienes transporte confiable para llenar diariamente al trabajo?
-              <Text style={styles.required}> *</Text>
+              {t("form.transport")}
+              <Text style={styles.required}>{t("form.required")}</Text>
             </Text>
             <Controller
               control={control}
@@ -272,7 +264,7 @@ export default function ApplicationForm() {
                     >
                       {field.value === "si" && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>Sí</Text>
+                    <Text style={styles.radioLabel}>{t("form.yes")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.radioOption}
@@ -286,7 +278,7 @@ export default function ApplicationForm() {
                     >
                       {field.value === "no" && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>No</Text>
+                    <Text style={styles.radioLabel}>{t("form.no")}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -299,9 +291,8 @@ export default function ApplicationForm() {
           {/* Documentación */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              ¿Cuentas con documentación para trabajar legalmente en Estados
-              Unidos?
-              <Text style={styles.required}> *</Text>
+              {t("form.documents")}
+              <Text style={styles.required}>{t("form.required")}</Text>
             </Text>
             <Controller
               control={control}
@@ -320,7 +311,7 @@ export default function ApplicationForm() {
                     >
                       {field.value === "si" && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>Sí</Text>
+                    <Text style={styles.radioLabel}>{t("form.yes")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.radioOption}
@@ -334,7 +325,7 @@ export default function ApplicationForm() {
                     >
                       {field.value === "no" && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>No</Text>
+                    <Text style={styles.radioLabel}>{t("form.no")}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -347,31 +338,35 @@ export default function ApplicationForm() {
           {/* Nivel de inglés */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              ¿Cuál es su nivel de inglés?
-              <Text style={styles.required}> *</Text>
+              {t("form.englishLevel")}
+              <Text style={styles.required}>{t("form.required")}</Text>
             </Text>
             <Controller
               control={control}
               name="englishLevel"
               render={({ field }) => (
                 <View>
-                  {["Bajo", "Medio", "Alto"].map((level) => (
+                  {[
+                    { key: "Bajo", label: t("form.englishLow") },
+                    { key: "Medio", label: t("form.englishMedium") },
+                    { key: "Alto", label: t("form.englishHigh") },
+                  ].map((level) => (
                     <TouchableOpacity
-                      key={level}
+                      key={level.key}
                       style={styles.radioOption}
-                      onPress={() => field.onChange(level)}
+                      onPress={() => field.onChange(level.key)}
                     >
                       <View
                         style={[
                           styles.radio,
-                          field.value === level && styles.radioSelected,
+                          field.value === level.key && styles.radioSelected,
                         ]}
                       >
-                        {field.value === level && (
+                        {field.value === level.key && (
                           <View style={styles.radioDot} />
                         )}
                       </View>
-                      <Text style={styles.radioLabel}>{level}</Text>
+                      <Text style={styles.radioLabel}>{level.label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -385,7 +380,8 @@ export default function ApplicationForm() {
           {/* Nombre */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              Nombre Completo<Text style={styles.required}> *</Text>
+              {t("form.fullName")}
+              <Text style={styles.required}>{t("form.required")}</Text>
             </Text>
             <Controller
               control={control}
@@ -393,7 +389,7 @@ export default function ApplicationForm() {
               render={({ field: { onChange, value } }) => (
                 <TextInput
                   style={[styles.input, errors.fullName && styles.inputError]}
-                  placeholder="Tu respuesta"
+                  placeholder={t("form.fullNamePlaceholder")}
                   placeholderTextColor="#6b7280"
                   value={value}
                   onChangeText={onChange}
@@ -408,7 +404,8 @@ export default function ApplicationForm() {
           {/* Teléfono */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              Número de teléfono<Text style={styles.required}> *</Text>
+              {t("form.phone")}
+              <Text style={styles.required}>{t("form.required")}</Text>
             </Text>
             <Controller
               control={control}
@@ -427,11 +424,10 @@ export default function ApplicationForm() {
                         showValidation && !isValid && styles.inputError,
                         showValidation && isValid && styles.inputSuccess,
                       ]}
-                      placeholder="1234567890"
+                      placeholder={t("form.phonePlaceholder")}
                       placeholderTextColor="#6b7280"
                       value={value}
                       onChangeText={(text) => {
-                        // Solo permitir números
                         const numericText = text.replace(/[^0-9]/g, "")
                         onChange(numericText)
                       }}
@@ -447,7 +443,8 @@ export default function ApplicationForm() {
                             : styles.phoneCounterInvalid,
                         ]}
                       >
-                        {phoneLength}/10 dígitos {isValid ? "✓" : ""}
+                        {phoneLength}/10 {t("form.phoneDigits")}{" "}
+                        {isValid ? "✓" : ""}
                       </Text>
                     )}
                   </>
@@ -462,7 +459,8 @@ export default function ApplicationForm() {
           {/* Fecha de nacimiento */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              Fecha de Nacimiento<Text style={styles.required}> *</Text>
+              {t("form.birthDate")}
+              <Text style={styles.required}>{t("form.required")}</Text>
             </Text>
             <Controller
               control={control}
@@ -470,25 +468,22 @@ export default function ApplicationForm() {
               render={({ field: { onChange, value } }) => (
                 <>
                   {Platform.OS === "web" ? (
-                    // Input nativo para WEB
                     <View style={styles.dateInput}>
                       <input
                         type="date"
                         value={
-                          value
-                            ? value.split("/").reverse().join("-") // Convertir DD/MM/YYYY a YYYY-MM-DD
-                            : ""
+                          value ? value.split("/").reverse().join("-") : ""
                         }
                         onChange={(e) => {
-                          const dateValue = e.target.value // YYYY-MM-DD
+                          const dateValue = e.target.value
                           if (dateValue) {
                             const [year, month, day] = dateValue.split("-")
-                            onChange(`${day}/${month}/${year}`) // Guardar como DD/MM/YYYY
+                            onChange(`${day}/${month}/${year}`)
                           } else {
                             onChange("")
                           }
                         }}
-                        max={new Date().toISOString().split("T")[0]} // No permitir fechas futuras
+                        max={new Date().toISOString().split("T")[0]}
                         min="1900-01-01"
                         style={{
                           width: "100%",
@@ -503,7 +498,6 @@ export default function ApplicationForm() {
                       />
                     </View>
                   ) : (
-                    // DatePicker para móviles
                     <>
                       <TouchableOpacity
                         style={[
@@ -538,7 +532,7 @@ export default function ApplicationForm() {
                             value ? styles.dateText : styles.datePlaceholder
                           }
                         >
-                          {value || "Toca para seleccionar fecha"}
+                          {value || t("form.birthDatePlaceholder")}
                         </Text>
                       </TouchableOpacity>
 
@@ -579,7 +573,7 @@ export default function ApplicationForm() {
                               style={styles.iosDatePickerButton}
                             >
                               <Text style={styles.iosDatePickerButtonText}>
-                                Cancelar
+                                {t("form.cancelDate")}
                               </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -603,7 +597,7 @@ export default function ApplicationForm() {
                                   { color: "#dc2626" },
                                 ]}
                               >
-                                Confirmar
+                                {t("form.confirmDate")}
                               </Text>
                             </TouchableOpacity>
                           </View>
@@ -639,7 +633,8 @@ export default function ApplicationForm() {
           {/* Dirección */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              Dirección<Text style={styles.required}> *</Text>
+              {t("form.address")}
+              <Text style={styles.required}>{t("form.required")}</Text>
             </Text>
             <Controller
               control={control}
@@ -647,7 +642,7 @@ export default function ApplicationForm() {
               render={({ field: { onChange, value } }) => (
                 <TextInput
                   style={[styles.input, errors.address && styles.inputError]}
-                  placeholder="Tu respuesta"
+                  placeholder={t("form.fullNamePlaceholder")}
                   placeholderTextColor="#6b7280"
                   value={value}
                   onChangeText={onChange}
@@ -662,8 +657,8 @@ export default function ApplicationForm() {
           {/* ¿Tienes experiencia? */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              ¿Tienes experiencia laboral?
-              <Text style={styles.required}> *</Text>
+              {t("form.hasExperience")}
+              <Text style={styles.required}>{t("form.required")}</Text>
             </Text>
             <Controller
               control={control}
@@ -682,7 +677,7 @@ export default function ApplicationForm() {
                     >
                       {field.value === "si" && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>Sí</Text>
+                    <Text style={styles.radioLabel}>{t("form.yes")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.radioOption}
@@ -696,7 +691,7 @@ export default function ApplicationForm() {
                     >
                       {field.value === "no" && <View style={styles.radioDot} />}
                     </View>
-                    <Text style={styles.radioLabel}>No</Text>
+                    <Text style={styles.radioLabel}>{t("form.no")}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -706,14 +701,12 @@ export default function ApplicationForm() {
             )}
           </View>
 
-          {/* Detalles de experiencia (si dijo Sí) */}
+          {/* Detalles de experiencia */}
           {hasExperience === "si" && (
             <View style={styles.field}>
-              <Text style={styles.label}>
-                Cuéntanos sobre tu experiencia laboral
-              </Text>
+              <Text style={styles.label}>{t("form.experienceDetails")}</Text>
               <Text style={styles.helperText}>
-                ¿Dónde trabajaste antes? ¿Qué hacías?
+                {t("form.experienceDetailsHelper")}
               </Text>
               <Controller
                 control={control}
@@ -721,7 +714,7 @@ export default function ApplicationForm() {
                 render={({ field: { onChange, value } }) => (
                   <TextInput
                     style={[styles.textArea]}
-                    placeholder="Ejemplo: Trabajé en un hotel como Housekeeping por 2 años..."
+                    placeholder={t("form.experienceDetailsPlaceholder")}
                     placeholderTextColor="#6b7280"
                     value={value}
                     onChangeText={onChange}
@@ -736,9 +729,7 @@ export default function ApplicationForm() {
 
           {/* Experiencia laboral (checkboxes) */}
           <View style={styles.field}>
-            <Text style={styles.label}>
-              ¿Qué otra experiencia laboral tienes?
-            </Text>
+            <Text style={styles.label}>{t("form.workExperience")}</Text>
             <Controller
               control={control}
               name="workExperience"
@@ -770,7 +761,6 @@ export default function ApplicationForm() {
                       <Text style={styles.checkboxLabel}>{option}</Text>
                     </TouchableOpacity>
                   ))}
-                  {/* Otro */}
                   <TouchableOpacity
                     style={styles.checkboxOption}
                     onPress={() =>
@@ -792,32 +782,33 @@ export default function ApplicationForm() {
                         />
                       )}
                     </View>
-                    <Text style={styles.checkboxLabel}>Otro:</Text>
+                    <Text style={styles.checkboxLabel}>{t("form.other")}</Text>
                   </TouchableOpacity>
                 </View>
               )}
             />
           </View>
 
-          {/* ← ESTA ES LA SECCIÓN NUEVA QUE AGREGUÉ */}
+          {/* Ubicación y período */}
           <View style={styles.field}>
             <Text style={styles.label}>
-              ¿Dónde y cuándo tuviste esta experiencia?
+              {t("form.experienceLocationTitle")}
             </Text>
             <Text style={styles.helperText}>
-              Cuéntanos en qué lugar y durante qué período trabajaste
+              {t("form.experienceLocationHelper")}
             </Text>
 
-            {/* Lugar de trabajo */}
             <View style={{ marginBottom: 16 }}>
-              <Text style={styles.subLabel}>Lugar de trabajo</Text>
+              <Text style={styles.subLabel}>
+                {t("form.experienceLocation")}
+              </Text>
               <Controller
                 control={control}
                 name="experienceLocation"
                 render={({ field: { onChange, value } }) => (
                   <TextInput
                     style={[styles.input]}
-                    placeholder="Ejemplo: Hotel Marriott en Orlando, FL"
+                    placeholder={t("form.experienceLocationPlaceholder")}
                     placeholderTextColor="#6b7280"
                     value={value}
                     onChangeText={onChange}
@@ -826,16 +817,17 @@ export default function ApplicationForm() {
               />
             </View>
 
-            {/* Período de tiempo */}
             <View>
-              <Text style={styles.subLabel}>Período de tiempo</Text>
+              <Text style={styles.subLabel}>
+                {t("form.experienceTimePeriod")}
+              </Text>
               <Controller
                 control={control}
                 name="experienceTimePeriod"
                 render={({ field: { onChange, value } }) => (
                   <TextInput
                     style={[styles.input]}
-                    placeholder="Ejemplo: Enero 2020 - Diciembre 2022"
+                    placeholder={t("form.experienceTimePeriodPlaceholder")}
                     placeholderTextColor="#6b7280"
                     value={value}
                     onChangeText={onChange}
@@ -847,9 +839,9 @@ export default function ApplicationForm() {
 
           {/* Notas adicionales */}
           <View style={styles.field}>
-            <Text style={styles.label}>Notas adicionales</Text>
+            <Text style={styles.label}>{t("form.additionalNotes")}</Text>
             <Text style={styles.helperText}>
-              ¿Algo más que quieras contarnos? (Opcional)
+              {t("form.additionalNotesHelper")}
             </Text>
             <Controller
               control={control}
@@ -857,7 +849,7 @@ export default function ApplicationForm() {
               render={({ field: { onChange, value } }) => (
                 <TextInput
                   style={[styles.textArea]}
-                  placeholder="Escribe aquí cualquier información adicional que consideres relevante..."
+                  placeholder={t("form.additionalNotesPlaceholder")}
                   placeholderTextColor="#6b7280"
                   value={value}
                   onChangeText={onChange}
@@ -880,7 +872,7 @@ export default function ApplicationForm() {
               disabled={!isFormValid || isSubmitting}
             >
               <Text style={styles.submitButtonText}>
-                {isSubmitting ? "Enviando..." : "Enviar"}
+                {isSubmitting ? t("form.sending") : t("form.submit")}
               </Text>
             </TouchableOpacity>
 
@@ -889,7 +881,7 @@ export default function ApplicationForm() {
               onPress={() => router.back()}
               disabled={isSubmitting}
             >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
+              <Text style={styles.cancelButtonText}>{t("form.cancel")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -907,7 +899,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#111",
-    paddingTop: 30,
+    paddingTop: 0,
     paddingHorizontal: 20,
     paddingBottom: 16,
     flexDirection: "row",
@@ -1115,28 +1107,6 @@ const styles = StyleSheet.create({
   headerContent: {
     alignItems: "center",
   },
-  logoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  logoBox: {
-    backgroundColor: "#dc2626",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  logoText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 12,
-  },
-  logoTitle: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginLeft: 8,
-  },
   inputSuccess: {
     borderColor: "#22c55e",
   },
@@ -1155,7 +1125,6 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   subLabel: {
-    // ← NUEVO ESTILO
     fontSize: 14,
     fontWeight: "500",
     color: "#d1d5db",
